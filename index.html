@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - CRUD Funcional</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-tasks"></i> Task Manager</h1>
+            <p>Sistema CRUD</p>
+        </header>
+
+        <main>
+            <!-- Formulario para crear/editar tareas -->
+            <section class="task-form-section">
+                <h2>Gestionar Tarea</h2>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskTitle">Título de la tarea:</label>
+                        <input type="text" id="taskTitle" name="title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskDescription">Descripción:</label>
+                        <textarea id="taskDescription" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskPriority">Prioridad:</label>
+                        <select id="taskPriority" name="priority">
+                            <option value="low">Baja</option>
+                            <option value="medium" selected>Media</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskDueDate">Fecha límite:</label>
+                        <input type="date" id="taskDueDate" name="dueDate">
+                    </div>
+                    
+                    <div class="form-buttons">
+                        <button type="submit" id="submitBtn">
+                            <i class="fas fa-plus"></i> Crear Tarea
+                        </button>
+                        <button type="button" id="cancelBtn" style="display: none;">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Filtros y búsqueda -->
+            <section class="filters-section">
+                <h2>Filtros y Búsqueda</h2>
+                <div class="filters-container">
+                    <div class="search-group">
+                        <input type="text" id="searchInput" placeholder="Buscar tareas...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    
+                    <select id="priorityFilter">
+                        <option value="">Todas las prioridades</option>
+                        <option value="high">Alta</option>
+                        <option value="medium">Media</option>
+                        <option value="low">Baja</option>
+                    </select>
+                    
+                    <select id="statusFilter">
+                        <option value="">Todos los estados</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="completed">Completada</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- Lista de tareas -->
+            <section class="tasks-section">
+                <div class="tasks-header">
+                    <h2>Lista de Tareas</h2>
+                    <div class="tasks-stats">
+                        <span id="totalTasks">Total: 0</span>
+                        <span id="pendingTasks">Pendientes: 0</span>
+                        <span id="completedTasks">Completadas: 0</span>
+                    </div>
+                </div>
+                
+                <div id="tasksContainer" class="tasks-container">
+                    <div class="no-tasks">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>No hay tareas creadas aún</p>
+                        <p class="subtitle">Comienza creando tu primera tarea</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirmar Acción</h3>
+            <p id="confirmMessage"></p>
+            <div class="modal-buttons">
+                <button id="confirmBtn" class="btn-danger">Confirmar</button>
+                <button id="cancelModalBtn" class="btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/taskManager.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

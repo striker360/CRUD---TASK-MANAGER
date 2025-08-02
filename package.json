@@ -1,0 +1,47 @@
+{
+  "name": "task-manager-crud",
+  "version": "1.0.0",
+  "description": "Sistema CRUD funcional para gestión de tareas sin base de datos",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080 -o",
+    "dev": "npx live-server --port=3000 --open=/",
+    "build": "echo 'No build process needed for vanilla JavaScript'",
+    "test": "echo 'Manual testing required - open index.html in browser'",
+    "validate": "echo 'Validating HTML, CSS and JS files...'",
+    "serve": "python -m http.server 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tu-usuario/task-manager-crud.git"
+  },
+  "keywords": [
+    "crud",
+    "task-manager",
+    "javascript",
+    "vanilla-js",
+    "html5",
+    "css3",
+    "localstorage",
+    "responsive",
+    "git-flow"
+  ],
+  "author": "Tu Nombre <tu.email@example.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tu-usuario/task-manager-crud/issues"
+  },
+  "homepage": "https://github.com/tu-usuario/task-manager-crud#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
