@@ -143,37 +143,22 @@ class TaskManager {
     }
 
     // Validar datos de tarea
-    validateTask(taskData) {
-        const errors = {};
-
-        if (!taskData.title || taskData.title.trim().length === 0) {
-            errors.title = 'El título es obligatorio';
-        } else if (taskData.title.trim().length > 100) {
-            errors.title = 'El título no puede tener más de 100 caracteres';
+    validateTask(task) {
+        const errors = [];
+        
+        if (!task.title || task.title.trim().length < 3) {
+            errors.push('El título debe tener al menos 3 caracteres');
         }
-
-        if (taskData.description && taskData.description.length > 500) {
-            errors.description = 'La descripción no puede tener más de 500 caracteres';
+        
+        if (task.title && task.title.length > 100) {
+            errors.push('El título no puede exceder 100 caracteres');
         }
-
-        if (!['low', 'medium', 'high'].includes(taskData.priority)) {
-            errors.priority = 'Prioridad inválida';
+        
+        if (task.dueDate && new Date(task.dueDate) < new Date()) {
+            errors.push('La fecha límite no puede ser anterior a hoy');
         }
-
-        if (taskData.dueDate) {
-            const dueDate = new Date(taskData.dueDate);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            if (dueDate < today) {
-                errors.dueDate = 'La fecha límite no puede ser anterior a hoy';
-            }
-        }
-
-        return {
-            isValid: Object.keys(errors).length === 0,
-            errors
-        };
+        
+        return errors;
     }
 
     // Exportar tareas a JSON
