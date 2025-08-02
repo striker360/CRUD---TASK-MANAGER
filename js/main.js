@@ -499,3 +499,275 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+class TaskFilters {
+    constructor() {
+        this.activeFilters = {
+            search: '',
+            priority: '',
+            status: ''
+        };
+        this.initializeFilters();
+    }
+
+    initializeFilters() {
+        const searchInput = document.getElementById('searchInput');
+        const priorityFilter = document.getElementById('priorityFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        
+        // Event listeners para filtros en tiempo real
+        searchInput.addEventListener('input', (e) => {
+            this.activeFilters.search = e.target.value.toLowerCase();
+            this.applyFilters();
+        });
+        
+        priorityFilter.addEventListener('change', (e) => {
+            this.activeFilters.priority = e.target.value;
+            this.applyFilters();
+        });
+        
+        statusFilter.addEventListener('change', (e) => {
+            this.activeFilters.status = e.target.value;
+            this.applyFilters();
+        });
+    }
+
+    applyFilters() {
+        const allTasks = taskManager.getAllTasks();
+        const filteredTasks = allTasks.filter(task => this.matchesFilters(task));
+        
+        this.displayFilteredTasks(filteredTasks);
+        this.updateFilterStats(filteredTasks, allTasks.length);
+    }
+
+    matchesFilters(task) {
+        const matchesSearch = !this.activeFilters.search || 
+            task.title.toLowerCase().includes(this.activeFilters.search) ||
+            task.description.toLowerCase().includes(this.activeFilters.search);
+            
+        const matchesPriority = !this.activeFilters.priority || 
+            task.priority === this.activeFilters.priority;
+            
+        const matchesStatus = !this.activeFilters.status || 
+            task.status === this.activeFilters.status;
+            
+        return matchesSearch && matchesPriority && matchesStatus;
+    }
+
+    displayFilteredTasks(filteredTasks) {
+        const container = document.getElementById('tasksContainer');
+        
+        if (filteredTasks.length === 0) {
+            container.innerHTML = `
+                <div class="no-tasks">
+                    <i class="fas fa-search"></i>
+                    <p>No se encontraron tareas con los filtros aplicados</p>
+                    <p class="subtitle">Intenta ajustar los criterios de búsqueda</p>
+                </div>`;
+            return;
+        }
+        
+        displayTasks(filteredTasks);
+    }
+
+    updateFilterStats(filteredTasks, totalTasks) {
+        const filterInfo = document.querySelector('.filter-info') || this.createFilterInfo();
+        filterInfo.textContent = `Mostrando ${filteredTasks.length} de ${totalTasks} tareas`;
+    }
+
+    createFilterInfo() {
+        const filterInfo = document.createElement('div');
+        filterInfo.className = 'filter-info';
+        document.querySelector('.tasks-header').appendChild(filterInfo);
+        return filterInfo;
+    }
+
+    clearAllFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('priorityFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        
+        this.activeFilters = { search: '', priority: '', status: '' };
+        this.applyFilters();
+    }
+}
+
+// Inicializar filtros cuando se carga la página
+let taskFilters;
+document.addEventListener('DOMContentLoaded', function() {
+    taskFilters = new TaskFilters();
+});
+
+
+// Sistema de validación de formularios
+class TaskFormValidator {
+    constructor() {
+        this.validationRules = {
+            title: {
+                required: true,
+                minLength: 3,
+                maxLength: 100,
+                pattern: /^[a-zA-ZÀ-ÿ0-9\s\-_.!?]+$/
+            },
+            description: {
+                maxLength: 500
+            },
+            dueDate: {
+                futureDate: true
+            }
+        };
+        this.initializeValidation();
+    }
+
+    initializeValidation() {
+        const form = document.getElementById('taskForm');
+        const inputs = form.querySelectorAll('input, textarea, select');
+        
+        // Validación en tiempo real
+        inputs.forEach(input => {
+            input.addEventListener('blur', () => this.validateField(input));
+            input.addEventListener('input', () => this.clearFieldError(input));
+        });
+        
+        // Validación al enviar formulario
+        form.addEventListener('submit', (e) => {
+            if (!this.validateForm()) {
+                e.preventDefault();
+                this.showFormErrors();
+            }
+        });
+    }
+
+    validateField(field) {
+        const fieldName = field.name;
+        const value = field.value.trim();
+        const rules = this.validationRules[fieldName];
+        
+        if (!rules) return true;
+
+        const errors = [];
+
+        // Validación requerido
+        if (rules.required && !value) {
+            errors.push(`El campo ${this.getFieldLabel(fieldName)} es obligatorio`);
+        }
+
+        // Validación longitud mínima
+        if (rules.minLength && value.length > 0 && value.length < rules.minLength) {
+            errors.push(`${this.getFieldLabel(fieldName)} debe tener al menos ${rules.minLength} caracteres`);
+        }
+
+        // Validación longitud máxima
+        if (rules.maxLength && value.length > rules.maxLength) {
+            errors.push(`${this.getFieldLabel(fieldName)} no puede exceder ${rules.maxLength} caracteres`);
+        }
+
+        // Validación patrón
+        if (rules.pattern && value && !rules.pattern.test(value)) {
+            errors.push(`${this.getFieldLabel(fieldName)} contiene caracteres no válidos`);
+        }
+
+        // Validación fecha futura
+        if (rules.futureDate && value) {
+            const inputDate = new Date(value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (inputDate < today) {
+                errors.push('La fecha límite debe ser hoy o una fecha futura');
+            }
+        }
+
+        this.displayFieldErrors(field, errors);
+        return errors.length === 0;
+    }
+
+    validateForm() {
+        const form = document.getElementById('taskForm');
+        const inputs = form.querySelectorAll('input, textarea');
+        let isValid = true;
+
+        inputs.forEach(input => {
+            if (!this.validateField(input)) {
+                isValid = false;
+            }
+        });
+
+        return isValid;
+    }
+
+    displayFieldErrors(field, errors) {
+        this.clearFieldError(field);
+        
+        if (errors.length > 0) {
+            field.classList.add('error');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error';
+            errorDiv.innerHTML = errors.map(error => `<span>${error}</span>`).join('');
+            
+            field.parentNode.appendChild(errorDiv);
+        }
+    }
+
+    clearFieldError(field) {
+        field.classList.remove('error');
+        const existingError = field.parentNode.querySelector('.field-error');
+        if (existingError) {
+            existingError.remove();
+        }
+    }
+
+    showFormErrors() {
+        const form = document.getElementById('taskForm');
+        const firstError = form.querySelector('.error');
+        if (firstError) {
+            firstError.focus();
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    getFieldLabel(fieldName) {
+        const labels = {
+            title: 'Título',
+            description: 'Descripción',
+            dueDate: 'Fecha límite'
+        };
+        return labels[fieldName] || fieldName;
+    }
+
+    // Validaciones personalizadas adicionales
+    validateBusinessRules(taskData) {
+        const errors = [];
+        
+        // No permitir tareas duplicadas
+        const existingTasks = taskManager.getAllTasks();
+        const isDuplicate = existingTasks.some(task => 
+            task.title.toLowerCase() === taskData.title.toLowerCase() && 
+            task.id !== taskData.id
+        );
+        
+        if (isDuplicate) {
+            errors.push('Ya existe una tarea con este título');
+        }
+        
+        // Validar límite de tareas de alta prioridad
+        if (taskData.priority === 'high') {
+            const highPriorityTasks = existingTasks.filter(task => 
+                task.priority === 'high' && task.status === 'pending'
+            );
+            
+            if (highPriorityTasks.length >= 5) {
+                errors.push('No puedes tener más de 5 tareas de alta prioridad pendientes');
+            }
+        }
+        
+        return errors;
+    }
+}
+
+// Inicializar validador
+let formValidator;
+document.addEventListener('DOMContentLoaded', function() {
+    formValidator = new TaskFormValidator();
+});

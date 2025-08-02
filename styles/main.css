@@ -496,3 +496,77 @@ button:hover {
         transform: rotate(360deg);
     }
 }
+
+
+/* Estilos para validación de formularios */
+.form-group input.error,
+.form-group textarea.error,
+.form-group select.error {
+    border: 2px solid #e74c3c;
+    background-color: rgba(231, 76, 60, 0.1);
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.field-error {
+    margin-top: 5px;
+    padding: 8px 12px;
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    position: relative;
+    animation: slideDown 0.3s ease-out;
+}
+
+.field-error:before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 15px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid #e74c3c;
+}
+
+@keyframes slideDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.field-error span {
+    display: block;
+    margin-bottom: 3px;
+}
+
+.field-error span:last-child {
+    margin-bottom: 0;
+}
+
+/* Indicadores visuales de validación */
+.form-group input:valid,
+.form-group textarea:valid {
+    border-color: #27ae60;
+}
+
+.form-group input:valid:not(:focus),
+.form-group textarea:valid:not(:focus) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2327ae60'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px 20px;
+    padding-right: 40px;
+}
