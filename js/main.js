@@ -499,3 +499,101 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+class TaskFilters {
+    constructor() {
+        this.activeFilters = {
+            search: '',
+            priority: '',
+            status: ''
+        };
+        this.initializeFilters();
+    }
+
+    initializeFilters() {
+        const searchInput = document.getElementById('searchInput');
+        const priorityFilter = document.getElementById('priorityFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        
+        // Event listeners para filtros en tiempo real
+        searchInput.addEventListener('input', (e) => {
+            this.activeFilters.search = e.target.value.toLowerCase();
+            this.applyFilters();
+        });
+        
+        priorityFilter.addEventListener('change', (e) => {
+            this.activeFilters.priority = e.target.value;
+            this.applyFilters();
+        });
+        
+        statusFilter.addEventListener('change', (e) => {
+            this.activeFilters.status = e.target.value;
+            this.applyFilters();
+        });
+    }
+
+    applyFilters() {
+        const allTasks = taskManager.getAllTasks();
+        const filteredTasks = allTasks.filter(task => this.matchesFilters(task));
+        
+        this.displayFilteredTasks(filteredTasks);
+        this.updateFilterStats(filteredTasks, allTasks.length);
+    }
+
+    matchesFilters(task) {
+        const matchesSearch = !this.activeFilters.search || 
+            task.title.toLowerCase().includes(this.activeFilters.search) ||
+            task.description.toLowerCase().includes(this.activeFilters.search);
+            
+        const matchesPriority = !this.activeFilters.priority || 
+            task.priority === this.activeFilters.priority;
+            
+        const matchesStatus = !this.activeFilters.status || 
+            task.status === this.activeFilters.status;
+            
+        return matchesSearch && matchesPriority && matchesStatus;
+    }
+
+    displayFilteredTasks(filteredTasks) {
+        const container = document.getElementById('tasksContainer');
+        
+        if (filteredTasks.length === 0) {
+            container.innerHTML = `
+                <div class="no-tasks">
+                    <i class="fas fa-search"></i>
+                    <p>No se encontraron tareas con los filtros aplicados</p>
+                    <p class="subtitle">Intenta ajustar los criterios de búsqueda</p>
+                </div>`;
+            return;
+        }
+        
+        displayTasks(filteredTasks);
+    }
+
+    updateFilterStats(filteredTasks, totalTasks) {
+        const filterInfo = document.querySelector('.filter-info') || this.createFilterInfo();
+        filterInfo.textContent = `Mostrando ${filteredTasks.length} de ${totalTasks} tareas`;
+    }
+
+    createFilterInfo() {
+        const filterInfo = document.createElement('div');
+        filterInfo.className = 'filter-info';
+        document.querySelector('.tasks-header').appendChild(filterInfo);
+        return filterInfo;
+    }
+
+    clearAllFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('priorityFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        
+        this.activeFilters = { search: '', priority: '', status: '' };
+        this.applyFilters();
+    }
+}
+
+// Inicializar filtros cuando se carga la página
+let taskFilters;
+document.addEventListener('DOMContentLoaded', function() {
+    taskFilters = new TaskFilters();
+});
