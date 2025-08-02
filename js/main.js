@@ -499,3 +499,41 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+function initializeFilters() {
+    const searchInput = document.getElementById('searchInput');
+    const priorityFilter = document.getElementById('priorityFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    searchInput.addEventListener('input', filterTasks);
+    priorityFilter.addEventListener('change', filterTasks);
+    statusFilter.addEventListener('change', filterTasks);
+}
+
+function filterTasks() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const priorityFilter = document.getElementById('priorityFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    const filteredTasks = taskManager.getAllTasks().filter(task => {
+        const matchesSearch = task.title.toLowerCase().includes(searchTerm) ||
+                             task.description.toLowerCase().includes(searchTerm);
+        const matchesPriority = !priorityFilter || task.priority === priorityFilter;
+        const matchesStatus = !statusFilter || task.status === statusFilter;
+        
+        return matchesSearch && matchesPriority && matchesStatus;
+    });
+    
+    displayTasks(filteredTasks);
+}
+
+function updateTaskStats() {
+    const tasks = taskManager.getAllTasks();
+    const totalTasks = tasks.length;
+    const pendingTasks = tasks.filter(task => task.status === 'pending').length;
+    const completedTasks = tasks.filter(task => task.status === 'completed').length;
+    
+    document.getElementById('totalTasks').textContent = `Total: ${totalTasks}`;
+    document.getElementById('pendingTasks').textContent = `Pendientes: ${pendingTasks}`;
+    document.getElementById('completedTasks').textContent = `Completadas: ${completedTasks}`;
+}
