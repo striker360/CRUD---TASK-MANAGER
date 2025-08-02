@@ -499,3 +499,338 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+
+// Sistema avanzado de gestión de prioridades
+class TaskPrioritySystem {
+    constructor() {
+        this.priorityConfig = {
+            high: {
+                label: 'Alta',
+                color: '#e74c3c',
+                icon: 'fas fa-exclamation-triangle',
+                weight: 3,
+                maxAllowed: 5,
+                urgencyThreshold: 3 // días antes de la fecha límite
+            },
+            medium: {
+                label: 'Media',
+                color: '#f39c12',
+                icon: 'fas fa-clock',
+                weight: 2,
+                maxAllowed: 10,
+                urgencyThreshold: 7
+            },
+            low: {
+                label: 'Baja',
+                color: '#27ae60',
+                icon: 'fas fa-check-circle',
+                weight: 1,
+                maxAllowed: -1, // sin límite
+                urgencyThreshold: 14
+            }
+        };
+        this.initializePrioritySystem();
+    }
+
+    initializePrioritySystem() {
+        this.updatePriorityIndicators();
+        this.addPriorityEventListeners();
+        this.createPriorityDashboard();
+    }
+
+    addPriorityEventListeners() {
+        const prioritySelect = document.getElementById('taskPriority');
+        if (prioritySelect) {
+            prioritySelect.addEventListener('change', (e) => {
+                this.handlePriorityChange(e.target.value);
+            });
+        }
+    }
+
+    handlePriorityChange(selectedPriority) {
+        const config = this.priorityConfig[selectedPriority];
+        const currentTasks = taskManager.getAllTasks();
+        const sameOrHigherPriorityTasks = currentTasks.filter(task => 
+            this.priorityConfig[task.priority].weight >= config.weight && 
+            task.status === 'pending'
+        );
+
+        // Validar límites de prioridad
+        if (config.maxAllowed > 0 && sameOrHigherPriorityTasks.length >= config.maxAllowed) {
+            this.showPriorityWarning(selectedPriority, sameOrHigherPriorityTasks.length);
+        }
+
+        this.updatePriorityPreview(selectedPriority);
+    }
+
+    showPriorityWarning(priority, currentCount) {
+        const config = this.priorityConfig[priority];
+        const warningDiv = document.querySelector('.priority-warning') || this.createPriorityWarning();
+        
+        warningDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>¡Atención! Ya tienes ${currentCount} tareas de prioridad ${config.label.toLowerCase()} o superior pendientes. 
+            Se recomienda completar algunas antes de agregar más.</span>
+        `;
+        warningDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            warningDiv.style.display = 'none';
+        }, 5000);
+    }
+
+    createPriorityWarning() {
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'priority-warning';
+        document.querySelector('.task-form-section').appendChild(warningDiv);
+        return warningDiv;
+    }
+
+    updatePriorityPreview(priority) {
+        const config = this.priorityConfig[priority];
+        const previewDiv = document.querySelector('.priority-preview') || this.createPriorityPreview();
+        
+        previewDiv.innerHTML = `
+            <div class="priority-badge ${priority}">
+                <i class="${config.icon}"></i>
+                ${config.label}
+            </div>
+            <span class="priority-description">
+                Esta tarea tendrá prioridad ${config.label.toLowerCase()}
+            </span>
+        `;
+    }
+
+    createPriorityPreview() {
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'priority-preview';
+        const priorityGroup = document.getElementById('taskPriority').parentNode;
+        priorityGroup.appendChild(previewDiv);
+        return previewDiv;
+    }
+
+    createPriorityDashboard() {
+        const dashboard = document.createElement('div');
+        dashboard.className = 'priority-dashboard';
+        dashboard.innerHTML = `
+            <h3><i class="fas fa-tachometer-alt"></i> Panel de Prioridades</h3>
+            <div class="priority-stats">
+                <div class="priority-stat high">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="count" id="highPriorityCount">0</span>
+                    <span class="label">Alta</span>
+                </div>
+                <div class="priority-stat medium">
+                    <i class="fas fa-clock"></i>
+                    <span class="count" id="mediumPriorityCount">0</span>
+                    <span class="label">Media</span>
+                </div>
+                <div class="priority-stat low">
+                    <i class="fas fa-check-circle"></i>
+                    <span class="count" id="lowPriorityCount">0</span>
+                    <span class="label">Baja</span>
+                </div>
+            </div>
+            <div class="priority-recommendations" id="priorityRecommendations"></div>
+        `;
+        
+        const filtersSection = document.querySelector('.filters-section');
+        filtersSection.parentNode.insertBefore(dashboard, filtersSection);
+    }
+
+    updatePriorityIndicators() {
+        const tasks = taskManager.getAllTasks();
+        const priorityCounts = this.calculatePriorityCounts(tasks);
+        
+        // Actualizar contadores
+        Object.keys(priorityCounts).forEach(priority => {
+            const countElement = document.getElementById(`${priority}PriorityCount`);
+            if (countElement) {
+                countElement.textContent = priorityCounts[priority];
+            }
+        });
+
+        // Actualizar recomendaciones
+        this.updatePriorityRecommendations(tasks, priorityCounts);
+    }
+
+    calculatePriorityCounts(tasks) {
+        return {
+            high: tasks.filter(t => t.priority === 'high' && t.status === 'pending').length,
+            medium: tasks.filter(t => t.priority === 'medium' && t.status === 'pending').length,
+            low: tasks.filter(t => t.priority === 'low' && t.status === 'pending').length
+        };
+    }
+
+    updatePriorityRecommendations(tasks, counts) {
+        const recommendationsEl = document.getElementById('priorityRecommendations');
+        if (!recommendationsEl) return;
+
+        const recommendations = [];
+        
+        // Tareas urgentes por fecha
+        const urgentTasks = this.getUrgentTasks(tasks);
+        if (urgentTasks.length > 0) {
+            recommendations.push(`⚡ ${urgentTasks.length} tareas próximas a vencer`);
+        }
+
+        // Sobrecarga de alta prioridad
+        if (counts.high > 3) {
+            recommendations.push(`⚠️ Demasiadas tareas de alta prioridad (${counts.high})`);
+        }
+
+        // Sugerencias de productividad
+        if (counts.low > counts.high + counts.medium) {
+            recommendations.push(`💡 Considera aumentar la prioridad de algunas tareas`);
+        }
+
+        recommendationsEl.innerHTML = recommendations.length > 0 
+            ? recommendations.map(rec => `<div class="recommendation">${rec}</div>`).join('')
+            : '<div class="no-recommendations">✅ Gestión de prioridades equilibrada</div>';
+    }
+
+    getUrgentTasks(tasks) {
+        const today = new Date();
+        return tasks.filter(task => {
+            if (!task.dueDate || task.status === 'completed') return false;
+            
+            const dueDate = new Date(task.dueDate);
+            const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+            const threshold = this.priorityConfig[task.priority].urgencyThreshold;
+            
+            return daysUntilDue <= threshold && daysUntilDue >= 0;
+        });
+    }
+
+    // Algoritmo de sugerencia automática de prioridad
+    suggestPriority(taskData) {
+        let suggestedPriority = 'medium';
+        let score = 0;
+
+        // Factor: proximidad de fecha límite
+        if (taskData.dueDate) {
+            const daysUntilDue = Math.ceil((new Date(taskData.dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+            if (daysUntilDue <= 3) score += 3;
+            else if (daysUntilDue <= 7) score += 2;
+            else if (daysUntilDue <= 14) score += 1;
+        }
+
+        // Factor: palabras clave en título
+        const urgentKeywords = ['urgente', 'inmediato', 'crítico', 'importante', 'asap'];
+        const titleLower = taskData.title.toLowerCase();
+        if (urgentKeywords.some(keyword => titleLower.includes(keyword))) {
+            score += 2;
+        }
+
+        // Factor: longitud de descripción (tareas más detalladas suelen ser más importantes)
+        if (taskData.description && taskData.description.length > 100) {
+            score += 1;
+        }
+
+        // Determinar prioridad basada en score
+        if (score >= 4) suggestedPriority = 'high';
+        else if (score >= 2) suggestedPriority = 'medium';
+        else suggestedPriority = 'low';
+
+        return suggestedPriority;
+    }
+
+    // Funcionalidad de auto-organización por prioridad
+    autoSortTasksByPriority() {
+        const tasks = taskManager.getAllTasks();
+        const sortedTasks = tasks.sort((a, b) => {
+            const priorityDiff = this.priorityConfig[b.priority].weight - this.priorityConfig[a.priority].weight;
+            if (priorityDiff !== 0) return priorityDiff;
+            
+            // Si tienen la misma prioridad, ordenar por fecha límite
+            if (a.dueDate && b.dueDate) {
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            } else if (a.dueDate) {
+                return -1;
+            } else if (b.dueDate) {
+                return 1;
+            }
+            return 0;
+        });
+
+        displayTasks(sortedTasks);
+        this.showSortNotification();
+    }
+
+    showSortNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'sort-notification';
+        notification.innerHTML = '<i class="fas fa-sort"></i> Tareas ordenadas por prioridad';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+}
+
+// Sobrescribir la función displayTasks para incluir indicadores de prioridad
+function displayTasksWithPriority(tasks) {
+    const container = document.getElementById('tasksContainer');
+    
+    if (tasks.length === 0) {
+        container.innerHTML = `
+            <div class="no-tasks">
+                <i class="fas fa-clipboard-list"></i>
+                <p>No hay tareas creadas aún</p>
+                <p class="subtitle">Comienza creando tu primera tarea</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = tasks.map(task => {
+        const priorityConfig = prioritySystem.priorityConfig[task.priority];
+        const isUrgent = prioritySystem.getUrgentTasks([task]).length > 0;
+        
+        return `
+            <div class="task-card priority-${task.priority} ${task.status} ${isUrgent ? 'urgent' : ''}" data-id="${task.id}">
+                <div class="task-header">
+                    <h3>${task.title}</h3>
+                    <div class="task-priority-indicator">
+                        <span class="priority-badge ${task.priority}">
+                            <i class="${priorityConfig.icon}"></i>
+                            ${priorityConfig.label}
+                        </span>
+                        ${isUrgent ? '<span class="urgent-indicator"><i class="fas fa-fire"></i></span>' : ''}
+                    </div>
+                </div>
+                <p class="task-description">${task.description || 'Sin descripción'}</p>
+                <div class="task-meta">
+                    <span class="due-date">
+                        <i class="fas fa-calendar"></i>
+                        ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Sin fecha límite'}
+                    </span>
+                    <span class="status-badge ${task.status}">
+                        ${task.status === 'completed' ? 'Completada' : 'Pendiente'}
+                    </span>
+                </div>
+                <div class="task-actions">
+                    <button onclick="editTask('${task.id}')" class="btn-edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="toggleTaskStatus('${task.id}')" class="btn-toggle">
+                        <i class="fas ${task.status === 'completed' ? 'fa-undo' : 'fa-check'}"></i>
+                    </button>
+                    <button onclick="deleteTask('${task.id}')" class="btn-delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Inicializar sistema de prioridades
+let prioritySystem;
+document.addEventListener('DOMContentLoaded', function() {
+    prioritySystem = new TaskPrioritySystem();
+    
+    // Reemplazar función original de displayTasks
+    window.displayTasks = displayTasksWithPriority;
+});
