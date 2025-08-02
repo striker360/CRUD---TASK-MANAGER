@@ -285,3 +285,17 @@ class TaskManager {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = TaskManager;
 }
+
+formatDate(dateString) {
+    if (!dateString) return 'Sin fecha límite';
+    
+    const date = new Date(dateString);
+    const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        timeZone: 'UTC'
+    };
+    
+    return date.toLocaleDateString('es-ES', options);
+}
